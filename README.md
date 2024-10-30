@@ -30,7 +30,7 @@
 
 3. Clone repository:
     ```bash
-    git clone https://github.com/FarelDev5/farnur.hacking.git
+    git clone https://github.com/FarelDev5/farnur.hacking
     ```
 
 4. Masuk ke direktori `farnur.hacking`:
@@ -61,7 +61,7 @@
 
 3. Clone repository:
     ```bash
-    git clone https://github.com/FarelDev5/farnur.hacking.git
+    git clone https://github.com/FarelDev5/farnur.hacking
     ```
 
 4. Masuk ke direktori `farnur.hacking`:
