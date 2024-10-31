@@ -1,14 +1,18 @@
 import os
-import requests
+import time
+import random
 import subprocess
+import requests
+import socket
+import webbrowser
 from rich import print
-from rich.panel import Panel
 from rich.console import Console
+from rich.panel import Panel
+from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
 from rich.table import Table
 from datetime import datetime
 import pyfiglet
 import re
-import socket
 
 console = Console()
 
@@ -26,7 +30,6 @@ def show_logo():
     gradient_logo = ""
     colors = ["#8A2BE2", "#9370DB", "#BA55D3", "#DA70D6", "#FF69B4"]
 
-    # Apply colors per line
     for line in logo_text.splitlines():
         color = colors[0]
         colors = colors[1:] + [colors[0]]  # Rotate colors
@@ -34,18 +37,15 @@ def show_logo():
 
     console.print(Panel(gradient_logo, title="[bold magenta]FARNUR[/bold magenta]", expand=False))
 
-# Function to display device information with a modern table
+# Function to display device information
 def device_info():
     device_name = os.popen("getprop ro.product.model").read().strip() or "Unknown Device"
     os_version = os.popen("getprop ro.build.version.release").read().strip() or "Unknown OS"
     termux_version = os.popen("pkg list-installed | grep termux").read().strip() or "Unknown Termux Version"
 
-    # Creating a modern table layout
     table = Table(title="Device Information", title_style="bold magenta")
     table.add_column("Property", style="bold cyan")
     table.add_column("Details", style="bold yellow")
-
-    # Adding rows with device information
     table.add_row("Device Model", device_name)
     table.add_row("OS Version", os_version)
     table.add_row("Termux Version", termux_version)
@@ -68,7 +68,7 @@ def ping_website():
 # Function to open location in Google Maps
 def open_in_maps(lat, lon):
     maps_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
-    os.system(f"termux-open-url '{maps_url}'")
+    webbrowser.open(maps_url)
     print(f"[bold green]Opening location in Google Maps: {maps_url}[/bold green]")
 
 # Function to track IP and open location in Google Maps
@@ -84,14 +84,13 @@ def track_ip(ip):
                 f"[bold red]Latitude: {data['lat']} | Longitude: {data['lon']}[/bold red]",
                 title="[bold magenta]IP Tracker[/bold magenta]", expand=False
             ))
-            open_in_maps(data['lat'], data['lon'])
-            geoip_lookup(ip)
+            open_in_maps(data['lat'], data['lon'])  # Directly open in Google Maps
         else:
             print("[bold red]IP tracking failed. Please check the IP address.[/bold red]")
     except Exception as e:
         print(f"[bold red]Error: {e}[/bold red]")
 
-# New Feature: GeoIP Lookup
+# GeoIP Lookup Feature
 def geoip_lookup(ip):
     try:
         response = requests.get(f"https://ipinfo.io/{ip}/json")
@@ -108,12 +107,12 @@ def geoip_lookup(ip):
     except Exception as e:
         print(f"[bold red]Error retrieving GeoIP data: {e}[/bold red]")
 
-# New Feature: Port Scanner
+# Port Scanner Feature
 def port_scanner(ip):
     print(f"[bold green]Scanning open ports on {ip}...[/bold green]")
     open_ports = []
     try:
-        for port in range(1, 1025):  # Scanning first 1024 ports
+        for port in range(1, 1025):
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(0.5)
             if sock.connect_ex((ip, port)) == 0:
@@ -139,116 +138,120 @@ def date_time():
         title="[bold magenta]Date & Time[/bold magenta]", expand=False
     ))
 
-# Function to run shell commands with loop
-def run_command():
-    os.system('clear')
-    show_logo()
-    author_info()
-    device_info()
-    while True:
-        print(Panel(
-            "[bold magenta]Command Menu[/bold magenta]\n"
-            "1. Enter a shell command to execute\n"
-            "Type 'clear' to clear the screen\n"
-            "Type 'exit' to return to the main menu",
-            title="[bold green]RUN COMMAND[/bold green]", expand=False
-        ))
+# Function to display available commands
+def show_commands():
+    commands = [
+        "track <ip> - Track the given IP address and open its location on Google Maps.",
+        "date - Display the current date and time.",
+        "geoip <ip> - Perform a GeoIP lookup for the given IP address.",
+        "port <ip> - Scan open ports for the given IP address.",
+        "ascii <text> - Convert text to ASCII codes.",
+        "ping <website> - Ping a website.",
+        "edit <filename> - Edit the specified Python file.",
+        "help - Show this list of commands.",
+        "clear - Clear the screen but keep the main display.",
+        "exit - Exit the program.",
+        "Any shell command - Install, run, or manage packages."
+    ]
 
-        command = input("$farnur/input/command: ")
-        
-        if command.strip().lower() == 'clear':
-            os.system('clear')
-            show_logo()
-            author_info()
-            device_info()
-            continue
-        
-        if command.strip().lower() == 'exit':
-            os.system('clear')
-            show_logo()
-            author_info()
-            device_info()
-            return  # Return to the main menu
-        
-        try:
-            result = subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
-            print(Panel(
-                f"[bold cyan]Command Output:[/bold cyan]\n{result.stdout}",
-                title="[bold magenta]Command Execution Result[/bold magenta]", expand=False
-            ))
-        except subprocess.CalledProcessError as e:
-            print(f"[bold red]Error executing command: {e.stderr}[/bold red]")
+    print(Panel(
+        "\n".join(commands),
+        title="[bold magenta]Available Commands[/bold magenta]", expand=False
+    ))
 
-# Function to validate IP address
+# Validate IP Address
 def is_valid_ip(ip):
     pattern = re.compile(r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$")
     return pattern.match(ip) is not None
 
-# Function to convert text to ASCII codes
+# ASCII Code Conversion Feature
 def text_to_ascii():
     text = input("$farnur/input/text: ")
     ascii_codes = [(char, ord(char)) for char in text]
-    
     result = "\n".join([f"[bold yellow]'{char}': {code}[/bold yellow]" for char, code in ascii_codes])
-    
     print(Panel(
         f"[bold cyan]ASCII Codes and Interpretations:[/bold cyan]\n{result}",
         title="[bold magenta]ASCII Conversion[/bold magenta]", expand=False
     ))
 
-# Main function to display menu
-def main_menu():
-    while True:
-        print(Panel(
-            "[bold magenta]Choose a Feature:[/bold magenta]\n"
-            "1. IP Tracking\n"
-            "2. Date & Time\n"
-            "3. Run Command\n"
-            "4. GeoIP Lookup\n"
-            "5. Port Scanner\n"
-            "6. ASCII Converter\n"
-            "7. Ping Website\n"
-            "8. Exit",
-            title="[bold green]FARNUR MENU[/bold green]", expand=False
-        ))
+# Function to edit a Python file
+def edit_file(filename):
+    try:
+        # Open the specified file in nano or create it if it doesn't exist
+        subprocess.run(["nano", filename])
+        print(f"[bold green]Editing {filename}...[/bold green]")
+        # After editing, run the Python file
+        run_python_file(filename)
+    except Exception as e:
+        print(f"[bold red]Error editing file: {e}[/bold red]")
 
-        choice = input("$farnur/input: ")
-        
-        if choice == '1':
-            ip = input("$farnur/input/ip: ")
-            if is_valid_ip(ip):
-                track_ip(ip)
-            else:
-                print("[bold red]Invalid IP address format.[/bold red]")
-        elif choice == '2':
-            date_time()
-        elif choice == '3':
-            run_command()
-        elif choice == '4':
-            ip = input("$farnur/input/geoip/ip: ")
-            if is_valid_ip(ip):
-                geoip_lookup(ip)
-            else:
-                print("[bold red]Invalid IP address format.[/bold red]")
-        elif choice == '5':
-            ip = input("$farnur/input/port/ip: ")
-            if is_valid_ip(ip):
-                port_scanner(ip)
-            else:
-                print("[bold red]Invalid IP address format.[/bold red]")
-        elif choice == '6':
-            text_to_ascii()
-        elif choice == '7':
-            ping_website()
-        elif choice == '8':
-            print("[bold red]Exiting program...[/bold red]")
-            break
-        else:
-            print("[bold red]Invalid choice. Please try again.[/bold red]")
+# Function to run a Python file
+def run_python_file(filename):
+    try:
+        subprocess.run(["python3", filename])
+    except Exception as e:
+        print(f"[bold red]Error running file: {e}[/bold red]")
 
-if __name__ == "__main__":
-    os.system('clear')
+# Main Command Loop
+def main():
     show_logo()
     author_info()
     device_info()
-    main_menu()
+
+    while True:
+        command = input("$farnur/cmd: ").strip().lower()
+        
+        if command.startswith("track"):
+            _, ip = command.split(maxsplit=1)
+            if is_valid_ip(ip):
+                track_ip(ip)
+            else:
+                print("[bold red]Invalid IP address.[/bold red]")
+        
+        elif command == "date":
+            date_time()
+        
+        elif command.startswith("geoip"):
+            _, ip = command.split(maxsplit=1)
+            if is_valid_ip(ip):
+                geoip_lookup(ip)
+            else:
+                print("[bold red]Invalid IP address.[/bold red]")
+        
+        elif command.startswith("port"):
+            _, ip = command.split(maxsplit=1)
+            if is_valid_ip(ip):
+                port_scanner(ip)
+            else:
+                print("[bold red]Invalid IP address.[/bold red]")
+        
+        elif command.startswith("ascii"):
+            _, text = command.split(maxsplit=1)
+            text_to_ascii()
+        
+        elif command.startswith("ping"):
+            _, website = command.split(maxsplit=1)
+            ping_website()
+        
+        elif command.startswith("edit"):
+            _, filename = command.split(maxsplit=1)
+            edit_file(filename)
+        
+        elif command == "help":
+            show_commands()
+        
+        elif command == "clear":
+            os.system('clear')
+            show_logo()
+            author_info()
+            device_info()
+        
+        elif command == "exit":
+            print("[bold red]Exiting program...[/bold red]")
+            break
+        
+        else:
+            os.system(command)
+
+if __name__ == "__main__":
+    main()
