@@ -3,10 +3,14 @@ import requests
 import subprocess
 from rich import print
 from rich.panel import Panel
+from rich.console import Console
+from rich.table import Table
 from datetime import datetime
 import pyfiglet
 import re
 import socket
+
+console = Console()
 
 # Author Information
 def author_info():
@@ -18,7 +22,7 @@ def author_info():
 
 # Function to display FARNUR logo with gradient effect
 def show_logo():
-    logo_text = pyfiglet.figlet_format("FARNUR", font="slant")
+    logo_text = pyfiglet.figlet_format("FARNUR", font="standard")
     gradient_logo = ""
     colors = ["#8A2BE2", "#9370DB", "#BA55D3", "#DA70D6", "#FF69B4"]
 
@@ -28,7 +32,38 @@ def show_logo():
         colors = colors[1:] + [colors[0]]  # Rotate colors
         gradient_logo += f"[{color}]{line}[/]\n"
 
-    print(Panel(gradient_logo, title="[bold magenta]FARNUR[/bold magenta]", expand=False))
+    console.print(Panel(gradient_logo, title="[bold magenta]FARNUR[/bold magenta]", expand=False))
+
+# Function to display device information with a modern table
+def device_info():
+    device_name = os.popen("getprop ro.product.model").read().strip() or "Unknown Device"
+    os_version = os.popen("getprop ro.build.version.release").read().strip() or "Unknown OS"
+    termux_version = os.popen("pkg list-installed | grep termux").read().strip() or "Unknown Termux Version"
+
+    # Creating a modern table layout
+    table = Table(title="Device Information", title_style="bold magenta")
+    table.add_column("Property", style="bold cyan")
+    table.add_column("Details", style="bold yellow")
+
+    # Adding rows with device information
+    table.add_row("Device Model", device_name)
+    table.add_row("OS Version", os_version)
+    table.add_row("Termux Version", termux_version)
+
+    console.print(table)
+
+# Function to ping a website
+def ping_website():
+    website = input("$farnur/input/website: ")
+    
+    try:
+        result = subprocess.run(["ping", "-c", "4", website], capture_output=True, text=True, check=True)
+        print(Panel(
+            f"[bold cyan]Ping Output:[/bold cyan]\n{result.stdout}",
+            title="[bold magenta]Ping Website[/bold magenta]", expand=False
+        ))
+    except subprocess.CalledProcessError as e:
+        print(f"[bold red]Error pinging website: {e.stderr}[/bold red]")
 
 # Function to open location in Google Maps
 def open_in_maps(lat, lon):
@@ -50,7 +85,7 @@ def track_ip(ip):
                 title="[bold magenta]IP Tracker[/bold magenta]", expand=False
             ))
             open_in_maps(data['lat'], data['lon'])
-            geoip_lookup(ip)  # Call the new GeoIP feature
+            geoip_lookup(ip)
         else:
             print("[bold red]IP tracking failed. Please check the IP address.[/bold red]")
     except Exception as e:
@@ -106,16 +141,34 @@ def date_time():
 
 # Function to run shell commands with loop
 def run_command():
+    os.system('clear')
+    show_logo()
+    author_info()
+    device_info()
     while True:
+        print(Panel(
+            "[bold magenta]Command Menu[/bold magenta]\n"
+            "1. Enter a shell command to execute\n"
+            "Type 'clear' to clear the screen\n"
+            "Type 'exit' to return to the main menu",
+            title="[bold green]RUN COMMAND[/bold green]", expand=False
+        ))
+
         command = input("$farnur/input/command: ")
         
         if command.strip().lower() == 'clear':
             os.system('clear')
             show_logo()
+            author_info()
+            device_info()
             continue
         
         if command.strip().lower() == 'exit':
-            break
+            os.system('clear')
+            show_logo()
+            author_info()
+            device_info()
+            return  # Return to the main menu
         
         try:
             result = subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
@@ -154,7 +207,8 @@ def main_menu():
             "4. GeoIP Lookup\n"
             "5. Port Scanner\n"
             "6. ASCII Converter\n"
-            "7. Exit",
+            "7. Ping Website\n"
+            "8. Exit",
             title="[bold green]FARNUR MENU[/bold green]", expand=False
         ))
 
@@ -185,12 +239,16 @@ def main_menu():
         elif choice == '6':
             text_to_ascii()
         elif choice == '7':
+            ping_website()
+        elif choice == '8':
             print("[bold red]Exiting program...[/bold red]")
             break
         else:
             print("[bold red]Invalid choice. Please try again.[/bold red]")
 
 if __name__ == "__main__":
+    os.system('clear')
     show_logo()
     author_info()
+    device_info()
     main_menu()
