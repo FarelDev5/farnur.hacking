@@ -20,7 +20,8 @@ console = Console()
 def author_info():
     print(Panel(
         "[bold green]Author: Farel Alfareza[/bold green]\n"
-        "[bold cyan]Instagram/TikTok: @farel.project_5[/bold cyan]",
+        "[bold cyan]Instagram/TikTok: @farel.project_5[/bold cyan]\n"
+        "[bold yellow]Harap Gunakan Tools Ini Dengan Bijak[/bold yellow]",
         title="[bold magenta]About[/bold magenta]", expand=False
     ))
 
@@ -54,7 +55,7 @@ def device_info():
 
 # Function to ping a website
 def ping_website():
-    website = input("$farnur/input/website: ")
+    website = input("[FARNUR]$cmd/input/site: ")
     
     try:
         result = subprocess.run(["ping", "-c", "4", website], capture_output=True, text=True, check=True)
@@ -166,7 +167,7 @@ def is_valid_ip(ip):
 
 # ASCII Code Conversion Feature
 def text_to_ascii():
-    text = input("$farnur/input/text: ")
+    text = input("[FARNUR]$cmd/input/text: ")
     ascii_codes = [(char, ord(char)) for char in text]
     result = "\n".join([f"[bold yellow]'{char}': {code}[/bold yellow]" for char, code in ascii_codes])
     print(Panel(
@@ -199,7 +200,7 @@ def main():
     device_info()
 
     while True:
-        command = input("$farnur/cmd: ").strip().lower()
+        command = input("[FARNUR]$cmd/input: ").strip().lower()
         
         if command.startswith("track"):
             _, ip = command.split(maxsplit=1)
